@@ -7,6 +7,7 @@ using VRage.ObjectBuilders;
 using VRageMath;
 using VRage.Utils;
 using VRage.Game;
+using VRage.Game.Entity;
 
 // =======================
 // PLEASE DO NOT EDIT THIS
@@ -117,6 +118,9 @@ namespace PSYCHO.ApplyEmissives
         ApplyEmissivesHandler EmissiveDataInstance => ApplyEmissivesHandler.EmissiveDataInstance;
         PSYCHO.ApplyEmissivesSettings.Settings SettingsData = new ApplyEmissivesSettings.Settings();
 
+        List<MyEntitySubpart> SubpartList = new List<MyEntitySubpart>();
+        bool HasSubpart = false;
+
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             if (MyAPIGateway.Utilities.IsDedicated)
@@ -140,6 +144,7 @@ namespace PSYCHO.ApplyEmissives
             if (Block == null)
                 return;
 
+
             var subtypeId = Block.BlockDefinition.SubtypeId;
 
             if (EmissiveDataInstance.EmissiveUserData.ContainsKey(subtypeId))
@@ -149,6 +154,24 @@ namespace PSYCHO.ApplyEmissives
             else
             {
                 return;
+            }
+
+            // Not really used but ready if needed.
+            Dictionary<string, IMyModelDummy> modelDummy = new Dictionary<string, IMyModelDummy>();
+            MyEntitySubpart foundSubpart;
+
+            Block.Model.GetDummies(modelDummy);
+            foreach (var subpart in modelDummy.Keys)
+            {
+                if (Block.TryGetSubpart(subpart, out foundSubpart))
+                {
+                    SubpartList.Add(foundSubpart);
+                }
+            }
+
+            if (SubpartList.Count > 0)
+            {
+                HasSubpart = true;
             }
 
             // Hook to events.
@@ -236,6 +259,13 @@ namespace PSYCHO.ApplyEmissives
                         {
                             EmissiveColor = emissive.FullyWorkingEmissiveColor;
                             Block.SetEmissiveParts(emissive.EmissiveMaterialName, EmissiveColor, emissive.FullyWorkingEmissiveGlow);
+
+                            if (HasSubpart)
+                            {
+                                Block.SetEmissivePartsForSubparts(emissive.EmissiveMaterialName, EmissiveColor, emissive.FullyWorkingEmissiveGlow);
+                                // PLACEHOLDER
+                                //ApplyEmissiveToSubparts(SubpartList, emissive.EmissiveMaterialName, EmissiveColor, emissive.FullyWorkingEmissiveGlow);
+                            }
                         }
                     }
                     else
@@ -244,6 +274,13 @@ namespace PSYCHO.ApplyEmissives
                         {
                             EmissiveColor = emissive.BustedEmissiveColor;
                             Block.SetEmissiveParts(emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+
+                            if (HasSubpart)
+                            {
+                                Block.SetEmissivePartsForSubparts(emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+                                // PLACEHOLDER
+                                //ApplyEmissiveToSubparts(SubpartList, emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+                            }
                         }
                     }
                 }
@@ -253,8 +290,23 @@ namespace PSYCHO.ApplyEmissives
                     {
                         EmissiveColor = emissive.BustedEmissiveColor;
                         Block.SetEmissiveParts(emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+
+                        if (HasSubpart)
+                        {
+                            Block.SetEmissivePartsForSubparts(emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+                            // PLACEHOLDER
+                            //ApplyEmissiveToSubparts(SubpartList, emissive.EmissiveMaterialName, EmissiveColor, emissive.BustedEmissiveGlow);
+                        }
                     }
                 }
+            }
+        }
+
+        void ApplyEmissiveToSubparts(List<MyEntitySubpart> list, string materialName, Color emissiveColor, float emissiveGlow)
+        {
+            foreach (var subpart in list)
+            {
+                subpart.SetEmissiveParts(materialName, emissiveColor, emissiveGlow);
             }
         }
     }
